@@ -1,0 +1,3 @@
+COHORT,ANCESTRY,PHENOTYPE,SCORE_FILEPATH
+Apply_PGS_test_data,AFR,bin_PHENO1,${launchDir}/Input/AFR.bin_PHENO1.Compute_PGS_test_weights.txt
+Apply_PGS_test_data,EUR,quant_PHENO2,${launchDir}/Input/EUR.quant_PHENO2.Compute_PGS_test_weights.txt
