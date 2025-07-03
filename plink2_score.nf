@@ -250,6 +250,8 @@ workflow PLINK2_SCORE {
         // reformat output for emit
         indiv_polygenic_scores = cat_scores
 
+        json_params = dump_params_to_json(params)
+
     emit:
        indiv_polygenic_scores
 }
@@ -514,5 +516,20 @@ process make_summary_plots {
         """
         touch ${validation_population}.all_computed_PGS_scores.boxplots.stub.png
         touch ${validation_population}.all_computed_PGS_scores.densityplots.stub.png
+        """
+}
+
+import groovy.json.JsonBuilder
+process dump_params_to_json {
+    publishDir "${launchDir}/Summary", mode: 'copy'
+    machineType 'n2-standard-2'
+
+    input:
+        val params_dict
+    output:
+        path('plink_score_params.json')
+    shell:
+        """
+        echo '${new JsonBuilder(params_dict).toPrettyString().replace(';', '|')}' > plink_score_params.json
         """
 }
