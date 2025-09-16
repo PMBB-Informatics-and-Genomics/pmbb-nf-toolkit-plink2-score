@@ -10,18 +10,18 @@ A workflow that computes individual level polygenic scores from variant level sc
 [Example Module Config File](https://github.com/PMBB-Informatics-and-Genomics/pmbb-geno-pheno-toolkit/tree/main/Example_Configs/plink_score.config)
 
 [Example nextflow.config File](https://github.com/PMBB-Informatics-and-Genomics/pmbb-geno-pheno-toolkit/tree/main/Example_Configs/nextflow.config)
-## Cloning Github Repository:
+## Cloning Github Repository
 
 
 * Command: `git clone https://github.com/PMBB-Informatics-and-Genomics/geno_pheno_workbench.git`
 
-* Navigate to relevant workflow directory run commands (our pipelines assume all of the nextflow files/scripts are in the current working directory)
-## Software Requirements:
+* Navigate to relevant workflow directory...
+## Software Requirements
 
 
 * [Nextflow version 23.04.1.5866](https://www.nextflow.io/docs/latest/cli.html)
 
-* [Singularity version 3.8.3](https://sylabs.io/docs/) OR [Docker version 4.30.0](https://docs.docker.com/)
+* [Singularity 3.8.3](https://sylabs.io/docs/) OR [Docker 4.30.0](https://docs.docker.com/)
 ## Commands for Running the Workflow
 
 
@@ -29,57 +29,129 @@ A workflow that computes individual level polygenic scores from variant level sc
 
 * Docker Command: `docker pull pennbiobank/plink2-score:latest`
 
-* Command to Pull from Google Container Registry: `docker pull gcr.io/verma-pmbb-codeworks-psom-bf87/plink2-score:latest`
+* Pull from Google Container Registry: `docker pull gcr.io/verma-pmbb-codeworks-psom-bf87/plink2-score:latest`
 
 * Run Command: `nextflow run /path/to/toolkit/module/plink2_score.nf`
 
 * Common `nextflow run` flags:
 
-    * `-resume` flag picks up the workflow where it left off, otherwise, the workflow will rerun from the beginning
+    * `-resume` flag picks up workflow where it left off
 
-    * `-stub` performs a sort of dry run of the whole workflow, checks channels without executing any code
+    * `-stub` performs a dry run, checks channels without executing code
 
-    * `-profile` selects the compute profiles we set up in nextflow.config (see nextflow.config file below)
+    * `-profile` selects the compute profiles in nextflow.config
 
-    * `-profile` selects the compute profiles we set up in nextflow.config (see nextflow.config file below)
+    * `-profile standard` uses the Docker image to execute processes
 
-    * `-profile standard` uses the docker image to executes the processes
+    * `-profile cluster` uses the Singularity container and submits processes to a queue
 
-    * `-profile cluster` uses the singularity container and submits processes to a queue- optimal for HPC or LPC computing systems
+    * `-profile all_of_us` uses the Docker image on All of Us Workbench
 
-    * `-profile all_of_us` uses the docker image to execute pipelines on the All of Us Researcher Workbench
-
-* for more information visit the [Nextflow documentation](https://www.nextflow.io/docs/latest/cli.html)
-# Configuration Parameters and Input File Descriptions
-
-## Workflow
+* More info: [Nextflow documentation](https://www.nextflow.io/docs/latest/cli.html)
+# Input Files for PLINK2_Score
 
 
-* `validation_populations` (Type: Map (Dictionary))
+* PLINK2 executable
 
-    * dictionary that specifies validation cohort information. each key is a cohort nickname (ex: PMBB, UKBB, eMERGE). each key must have nested keys 'plink_prefix', 'plink_suffix', 'plink_file_flag', 'population_subset_file' and 'variant_id format' but change these values accordingly (make sure the values are in quotes). plink_prefix must have full file path (If you want to use a relative path, add "${launchDir}/" in front of the path). plink files must be chromosome separated. all cohorts must be in the same genome build as each other and as the PGS outputs
+    * This is the /path/to/the/correct/plink executable with the right version. It usually comes from the docker/singularity container
 
-* `input_descriptor_table_colnames` (Type: Map (Dictionary))
+    * Type: Executable
 
-    * dictionary including names of essential columns in input descriptor table. specifies cohort (nickname or dataset), genetic ancestry, phenotype, and PGS weights FULL FILE PATH AND FILENAME column names (If you want to use a relative path, add "${launchDir}/" in front of the path)
+* Python executable
 
-* `input_descriptor_table_filename (Compute PGS)` (Type: File Path)
+    * This is the /path/to/the/correct/python executable that has the right packages installed and right version. It usually comes from the docker/singularity container. If not, be sure to have most of the standard data packages like pandas, numpy, scipy, matplotlib, seaborn, etc
 
-    * file that specifies the cohort, ancestry, phenotype, and pgs weights filenames. must have four columns: cohort, ancestry, phenotype, pgs weights filename. MUST BE A CSV (comma delimited)
+    * Type: Executable
 
-* `my_python` (Type: File Path)
+* SNP Weight Files
 
-    * Path to the python executable to be used for python scripts - often it comes from the docker/singularity container (/opt/conda/bin/python)
-## Pre-Processing
+    * Variant-level scores
+
+    * Type: PGS SNP Weights
+
+    * Format: txt
+
+    * File Header:
 
 
-* `score_variant_id_format` (Type: String)
+    ```
+    CHR     RSID    POS     A1      A2      PGS
+    ```
+# Output Files for PLINK2_Score
 
-    * score_variant_id_format specifies the variant ID format in the score file. this assumes that all score files have the same variant ID. modeled this based on the plink format. examples: "RSID" = RSID (ex: rs6893237), "@:#:$r:$a" = chr:pos:ref:alt (ex: 1:100000:G:A), "chr@:#:$r:$a" = chr:pos:ref:alt (ex: chr1:100000:G:A), '@:#' = chr:pos (ex: 1:100000), 'chr@:#' = chr:pos (ex: chr1:100000)
 
-* `score_file_colnames` (Type: Map (Dictionary))
+* Boxplots
 
-    * dictionary that specifies the column names in your PGS output files. need to specify chromosome column, position column, A1 column, A2 column, variant ID column, and score (PGS) column. this assumes that all PGS output files have the same column names. do not change the keys (pos_colname, a1_colname, etc), only change the values accordingly
+    * Boxplot showing the distribution of individual-level polygenic scores per validation population and phenotype
+
+    * Type: Distribution Plot
+
+    * Format: png
+
+        * Parallel By: Validation Population
+
+* Density plots
+
+    * Density plot showing the distribution of individual-level polygenic scores per validation population and phenotype
+
+    * Type: Distribution Plot
+
+    * Format: png
+
+        * Parallel By: Validation Population
+
+* PLINK Score Averages
+
+    * This is the average score of all the variants for each person (Summed score/number of alleles), for all chromosomes.
+
+    * Type: Computed Risk Scores
+
+    * Format: txt
+
+    * File Header:
+
+
+    ```
+    #FID    IID     ALLELE_CT       NAMED_ALLELE_DOSAGE_SUM    ANCESTRY.PHENOTYPE.SCORE_AVG
+    ```
+
+        * Parallel By: Validation Population
+
+* PLINK Score Variant Lists
+
+    * This is a list of all the variants used in each validation cohort to compute the score, for all chromosomes.
+
+    * Type: Computed Risk Scores
+
+    * Format: txt
+
+    * File Header:
+
+
+    ```
+    Variant_ID
+    ```
+
+        * Parallel By: Validation Population
+
+* PLINK Score Sums
+
+    * This is the summed score of all the variants for each person, for all chromosomes.
+
+    * Type: Computed Risk Scores
+
+    * Format: txt
+
+    * File Header:
+
+
+    ```
+    #FID    IID     ALLELE_CT       NAMED_ALLELE_DOSAGE_SUM    ANCESTRY.PHENOTYPE.SCORE_SUM
+    ```
+
+        * Parallel By: Validation Population
+# Parameters for PLINK2_Score
+
 ## PLINK
 
 
@@ -106,89 +178,37 @@ A workflow that computes individual level polygenic scores from variant level sc
 * `my_plink2` (Type: File Path)
 
     * Path to the PLINK2 executable to be used for PLINK2 score - often it comes from the docker or singularity container (plink2) (is on the path in the container
-# Output Files from PLINK2_Score
+## Pre-Processing
 
 
-* Boxplots
+* `score_variant_id_format` (Type: String)
 
-    * Boxplot showing the distribution of individual-level polygenic scores per validation population and phenotype
+    * score_variant_id_format specifies the variant ID format in the score file. this assumes that all score files have the same variant ID. modeled this based on the plink format. examples: "RSID" = RSID (ex: rs6893237), "@:#:$r:$a" = chr:pos:ref:alt (ex: 1:100000:G:A), "chr@:#:$r:$a" = chr:pos:ref:alt (ex: chr1:100000:G:A), '@:#' = chr:pos (ex: 1:100000), 'chr@:#' = chr:pos (ex: chr1:100000)
 
-    * Type: Distribution Plot
+* `score_file_colnames` (Type: Map (Dictionary))
 
-    * Format: png
-
-    * Parallel By: Validation Population
-
-* Density plots
-
-    * Density plot showing the distribution of individual-level polygenic scores per validation population and phenotype
-
-    * Type: Distribution Plot
-
-    * Format: png
-
-    * Parallel By: Validation Population
-
-* PLINK Score Averages
-
-    * This is the average score of all the variants for each person (Summed score/number of alleles), for all chromosomes.
-
-    * Type: Computed Risk Scores
-
-    * Format: txt
-
-    * Parallel By: Validation Population
-
-    * Output File Header:
+    * dictionary that specifies the column names in your PGS output files. need to specify chromosome column, position column, A1 column, A2 column, variant ID column, and score (PGS) column. this assumes that all PGS output files have the same column names. do not change the keys (pos_colname, a1_colname, etc), only change the values accordingly
+## Workflow
 
 
+* `validation_populations` (Type: Map (Dictionary))
 
+    * dictionary that specifies validation cohort information. each key is a cohort nickname (ex: PMBB, UKBB, eMERGE). each key must have nested keys 'plink_prefix', 'plink_suffix', 'plink_file_flag', 'population_subset_file' and 'variant_id format' but change these values accordingly (make sure the values are in quotes). plink_prefix must have full file path (If you want to use a relative path, add "${launchDir}/" in front of the path). plink files must be chromosome separated. all cohorts must be in the same genome build as each other and as the PGS outputs
 
+* `input_descriptor_table_colnames` (Type: Map (Dictionary))
 
-    ```
-    #FID    IID     ALLELE_CT       NAMED_ALLELE_DOSAGE_SUM    ANCESTRY.PHENOTYPE.SCORE_AVG
-    ```
+    * dictionary including names of essential columns in input descriptor table. specifies cohort (nickname or dataset), genetic ancestry, phenotype, and PGS weights FULL FILE PATH AND FILENAME column names (If you want to use a relative path, add "${launchDir}/" in front of the path)
 
-* PLINK Score Variant Lists
+* `input_descriptor_table_filename (Compute PGS)` (Type: File Path)
 
-    * This is a list of all the variants used in each validation cohort to compute the score, for all chromosomes.
+    * file that specifies the cohort, ancestry, phenotype, and pgs weights filenames. must have four columns: cohort, ancestry, phenotype, pgs weights filename. MUST BE A CSV (comma delimited)
 
-    * Type: Computed Risk Scores
+* `my_python` (Type: File Path)
 
-    * Format: txt
+    * Path to the python executable to be used for python scripts - often it comes from the docker/singularity container (/opt/conda/bin/python)
+# Configuration and Advanced Workflow Files
 
-    * Parallel By: Validation Population
-
-    * Output File Header:
-
-
-
-
-
-    ```
-    Variant_ID
-    ```
-
-* PLINK Score Sums
-
-    * This is the summed score of all the variants for each person, for all chromosomes.
-
-    * Type: Computed Risk Scores
-
-    * Format: txt
-
-    * Parallel By: Validation Population
-
-    * Output File Header:
-
-
-
-
-
-    ```
-    #FID    IID     ALLELE_CT       NAMED_ALLELE_DOSAGE_SUM    ANCESTRY.PHENOTYPE.SCORE_SUM
-    ```
-# Current Dockerfile for the Container/Image
+## Current Dockerfile for Container/Image
 
 
 ```docker
@@ -213,4 +233,136 @@ RUN apt-get update \
 
 USER root
 
+```
+## Current `nextflow.config` contents
+
+
+```
+includeConfig "${launchDir}/plink2_score.config"
+
+// set up profile
+// change these parameters as needed
+profiles {
+    non_docker_dev {
+        process.executor = awsbatch-or-lsf-or-slurm-etc
+    }
+
+    standard {
+        process.executor = awsbatch-or-lsf-or-slurm-etc
+        process.container = 'pennbiobank/plink2-score:latest'
+        docker.enabled = true
+    }
+    cluster {
+        process.executor = awsbatch-or-lsf-or-slurm-etc
+        process.queue = 'epistasis_normal'
+        process.memory = '30GB'
+        process.container = 'plink2_score.sif'
+        singularity.enabled = true
+        singularity.runOptions = '-B /root/,/directory/,/names/'
+    }
+
+    all_of_us {
+       // CHANGE EVERY TIME! These are specific for each user, see docs
+        google.lifeSciences.serviceAccountEmail = service@email.gservicaaccount.com
+        workDir = /path/to/workdir/ // can be gs://
+        google.project = terra project id
+
+        // These should not be changed unless you are an advanced user
+        process.container = 'gcr.io/verma-pmbb-codeworks-psom-bf87/plink2-score:latest' // GCR SAIGE docker container (static)
+
+        // these are AoU, GCR parameters that should NOT be changed
+        process.memory = '15GB' // minimum memory per process (static)
+        process.executor = awsbatch-or-lsf-or-slurm-etc
+        google.zone = "us-central1-a" // AoU uses central time zone (static)
+        google.location = "us-central1"
+        google.lifeSciences.debug = true 
+        google.lifeSciences.network = "network"
+        google.lifeSciences.subnetwork = "subnetwork"
+        google.lifeSciences.usePrivateAddress = false
+        google.lifeSciences.copyImage = "gcr.io/google.com/cloudsdktool/cloud-sdk:alpine"
+        google.enableRequesterPaysBuckets = true
+        // google.lifeSciences.bootDiskSize = "20.GB" // probably don't need this
+    }
+}
+
+```
+# Detailed Pipeline Steps
+
+
+from pathlib import Path
+
+detailed_steps_file = Path("Markdowns/Pipeline_Detailed_Steps.md")
+
+# Write the detailed steps content to a separate file
+detailed_steps_file
+
+# Detailed Steps for Runnning One of our Pipelines
+
+Note: test data were obtained from the [SAIGE github repo](https://github.com/saigegit/SAIGE).
+
+## Part I: Setup
+1. Start your own tools directory and go there. You may do this in your project analysis directory, but it often makes sense to clone into a general `tools` location
+
+```sh
+# Make a directory to clone the pipeline into
+TOOLS_DIR="/path/to/tools/directory"
+mkdir $TOOLS_DIR
+cd $TOOLS_DIR
+```
+
+2. Download the source code by cloning from git
+
+```sh
+git clone https://github.com/PMBB-Informatics-and-Genomics/pmbb-nf-toolkit-saige-family.git
+cd ${TOOLS_DIR}/pmbb-nf-toolkit-saige-family/
+```
+
+3. Build the `saige.sif` singularity image
+- you may call the image whatever you like, and store it wherever you like. Just make sure you specify the name in `nextflow.conf`
+- this does NOT have to be done for every saige-based analysis, but it is good practice to re-build every so often as we update regularly. 
+
+```sh
+cd ${TOOLS_DIR}/pmbb-nf-toolkit-saige-family/
+singularity build saige.sif docker://pennbiobank/saige:latest
+```
+
+## Part II: Configure your run
+
+1. Make a separate analysis/run/working directory.
+   - The quickest way to get started, is to run the analysis in the folder the pipeline is run. However, subsequent analyses will over-write results from previous analyses. 
+   - ❗This step is optional, but We Highly recommend making a  `tools` directory separate from your `run` directory. The only items that need to be in the run directory are the `nextflow.conf` file and the `${workflow}.conf` file.
+
+```sh
+WDIR="/path/to/analysis/run1"
+mkdir -p 
+cd $WDIR
+```
+
+2. Fill out the `nextflow.config` file for your system.
+    - See [Nextflow configuration documentation](https://www.nextflow.io/docs/latest/config.html) for information on how to configure this file. An example can be found on our GitHub: [Nextflow Config](https://github.com/PMBB-Informatics-and-Genomics/pmbb-geno-pheno-toolkit/Example_Configs/nextflow.config).
+    - ❗IMPORTANTLY, you must configure a user-defined profile for your run environments (local, docker, saige, cluster, etc.). If multiple profiles are specified, run with a specific profile using `nextflow run -profile ${MY_PROFILE}`.
+    - For singularity, The profile's attribute `process.container` should be set to `'/path/to/saige.sif'` (replace `/path/to` with the location where you built the image above). See [Nextflow Executor Information](https://www.nextflow.io/docs/latest/executor.html) for more details.
+    - ⚠️As this file remains mostly unchanged for your system, We recommend storing this file in the `tools/pipeline` directory and symlinking it to your run directory.
+
+3. Create a pipeline-specific `.config` file specifying your run parameters and input files. See Below for workflow-specific parameters and what they mean.
+   - Everything in here can be configured in `nextflow.config`, however we find it easier to separate the system-level profiles from the individual run parameters. 
+   - Examples can be found in our Pipeline-Specific [Example Config Files](https://github.com/PMBB-Informatics-and-Genomics/pmbb-geno-pheno-toolkit/Example_Configs/).
+   - you can compartamentalize your config file as much as you like by passing 
+   - There are 2 ways to specify the config file during a run:
+      - with the `-c` option on the command line: `nextflow run -c /path/to/workflow.conf`
+      - in the `nextflow.conf`: at the top of the file add: `includeConfig '/path/to/workflow.conf'` 
+
+## Part III: Run your analysis
+
+- ❗We HIGHLY recommend doing a STUB run to test the analysis using the `-stub` flag. This is a dry run to make sure your environment, parameters, and input_files are specified and formatted correctly. 
+- ❗We HIGHLY recommend doing a test run with the included test data in `${TOOLS_DIR}/pmbb-nf-toolkit-saige-family/test_data`
+- in the `test_data/` directory for each pipeline, we have several pre-configured analyses runs with input data and fully-specified config files.
+
+```sh
+# run an exwas stub
+nextflow run /path/to/pmbb-nf-toolkit-saige-family/workflows/saige_exwas.nf -profile cluster -c /path/to/run1/exwas.conf -stub
+# run an exwas for real
+nextflow run /path/to/pmbb-nf-toolkit-saige-family/workflows/saige_exwas.nf -profile cluster -c /path/to/run1/exwas.conf
+# resume an exwas run if it was interrupted or ran into an error
+nextflow run /path/to/pmbb-nf-toolkit-saige-family/workflows/saige_exwas.nf -profile cluster -c /path/to/run1/exwas.conf -resume
 ```
