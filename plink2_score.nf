@@ -259,7 +259,6 @@ workflow PLINK2_SCORE {
 process make_apply_pgs_input {
     publishDir "${launchDir}/${cohort}/"
     memory = '64 GB'
-    machineType 'n2-standard-16'
     input:
         tuple val(cohort), val(ancestry), val(pheno), path(score_weights_file), val(validation_population), val(plink_flag), path(bim_pvar_files)
         val(val_pop_variant_id_collect)
@@ -307,7 +306,6 @@ process make_apply_pgs_input {
 
 process join_score_files {
     publishDir "${launchDir}/"
-    machineType 'n2-standard-4'
     input:
         path(all_apply_pgs_input_files)
         val(my_python)
@@ -353,7 +351,6 @@ process join_score_files {
 
 process clean_sample_list {
     publishDir "${launchDir}/sample_lists/"
-    machineType 'n2-standard-4'
     input:
         tuple val(validation_population), path(sample_list), val(id_col), val(sample_delim), path(fam_psam_file_list)
         val(my_python)
@@ -410,8 +407,10 @@ process clean_sample_list {
 
 process compute_scores {
     publishDir "${launchDir}/plink_score_output/chromosome_separated_outputs/"
-    disk params.max_chr_bed_size
-    machineType 'n2-standard-4'
+    disk {
+        def fileSizeGb = plink_files[1].size() / (1024 ** 3)
+        return "${50 + fileSizeGb} GB"
+    }
     input:
         tuple val(validation_population), val(chromosome), val(plink_flag), path(plink_files), path(sample_list_file)
         path(combined_apply_pgs_input)
@@ -470,7 +469,6 @@ process compute_scores {
 
 process concatenate_plink_score_outputs {
     publishDir "${launchDir}/plink_score_output/concatenated_outputs/", mode:'copy'
-    machineType 'n2-standard-4'
     input:
         tuple val(validation_population), path(plink_score_output_files), path(plink_score_var_lists_files)
         path(cat_outputs_script)
@@ -493,7 +491,6 @@ process concatenate_plink_score_outputs {
 
 process make_summary_plots {
     publishDir "${launchDir}/Plots/",mode:'copy'
-    machineType 'n2-standard-4'
 
     input:
         path(summary_plots_script)
@@ -522,7 +519,6 @@ process make_summary_plots {
 import groovy.json.JsonBuilder
 process dump_params_to_json {
     publishDir "${launchDir}/Summary", mode: 'copy'
-    machineType 'n2-standard-2'
 
     input:
         val params_dict
